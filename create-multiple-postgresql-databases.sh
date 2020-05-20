@@ -4,19 +4,41 @@ set -e
 set -u
 
 function create_user_and_database() {
-	local database=$1
+	local database=$(echo $1 | tr ',' ' ' | awk  '{print $1}')
+	local owner=$(echo $1 | tr ',' ' ' | awk  '{print $2}')
 	echo "  Creating user and database '$database'"
 	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-	    CREATE USER $database;
+			CREATE USER $owner;
 	    CREATE DATABASE $database;
-	    GRANT ALL PRIVILEGES ON DATABASE $database TO $database;
+	    GRANT ALL PRIVILEGES ON DATABASE $database TO $owner;
+EOSQL
+	echo "  Created user '$owner' and database '$database' -------------------------------"
+}
+
+function show_created_user_and_database() {
+	echo "  Show databases"
+	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --list
+	echo "  Show users"
+	psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+			SELECT u.usename AS "Role name",
+				CASE WHEN u.usesuper AND u.usecreatedb THEN CAST('superuser, create
+			database' AS pg_catalog.text)
+						WHEN u.usesuper THEN CAST('superuser' AS pg_catalog.text)
+						WHEN u.usecreatedb THEN CAST('create database' AS
+			pg_catalog.text)
+						ELSE CAST('' AS pg_catalog.text)
+				END AS "Attributes"
+			FROM pg_catalog.pg_user u
+			ORDER BY 1;
 EOSQL
 }
 
 if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
 	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
-	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
+	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ':' ' '); do
 		create_user_and_database $db
 	done
 	echo "Multiple databases created"
+	show_created_user_and_database
+	echo "  Finish work ------------------------------------------------------------------"
 fi

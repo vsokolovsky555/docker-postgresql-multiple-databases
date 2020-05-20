@@ -23,7 +23,7 @@ Clone the repository, mount its directory as a volume into
 (`docker-compose` syntax):
 
     myapp-postgresql:
-        image: postgres:9.6.2
+        image: postgres:12
         volumes:
             - ../docker-postgresql-multiple-databases:/docker-entrypoint-initdb.d
         environment:
