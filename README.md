@@ -55,3 +55,15 @@ If you need to use non-standard database names (hyphens, uppercase letters etc),
 
         environment:
             - POSTGRES_MULTIPLE_DATABASES="test-db-1","test-db-2"
+            
+## Errors
+
+If you have this error:
+
+```bash
+/docker-entrypoint-initdb.d/create-multiple-postgresql-databases.sh: line 2: $'\r': command not found
+```
+
+You need change CRLF to LF in file: `create-multiple-postgresql-databases.sh`. 
+
+See more here: [https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf](https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf)
